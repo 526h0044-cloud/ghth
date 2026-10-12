@@ -1,0 +1,578 @@
+// Web Audio API synthesizer for notification sounds and Retro Cyber Audio Cues
+let audioCtx: AudioContext | null = null;
+
+const STORAGE_KEY_AUDIO_MUTED = 'gigme_sound_muted';
+
+export function isAudioMuted(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_AUDIO_MUTED) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setAudioMuted(muted: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_AUDIO_MUTED, muted ? 'true' : 'false');
+  } catch {
+    // ignore
+  }
+}
+
+function getAudioContext(): AudioContext {
+  if (!audioCtx) {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new AudioContextClass();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+export type SoundEffectType =
+  | 'DING_DEFAULT'
+  | 'CASH_COUNT'
+  | 'BANK_TING'
+  | 'SOFT_VIBRATE'
+  | 'RADAR_PING'
+  | 'ESCROW_LOCK'
+  | 'LEVEL_UP'
+  | 'BUTTON_CLICK'
+  | 'SUCCESS_CHIME'
+  | 'CALL_RING'
+  | 'CALL_HANGUP';
+
+export function playNotificationSound(type: SoundEffectType = 'DING_DEFAULT') {
+  if (isAudioMuted()) return;
+
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    switch (type) {
+      case 'CALL_RING': {
+        // Dual-tone VoIP calling ring (440Hz + 480Hz classic telephone ringback tone)
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(440, now);
+        osc2.frequency.setValueAtTime(480, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now + 0.4);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.45);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.45);
+        osc2.stop(now + 0.45);
+        break;
+      }
+
+      case 'CALL_HANGUP': {
+        // Call termination sound (Descending gentle beeps)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(425, now);
+        osc.frequency.setValueAtTime(350, now + 0.15);
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      }
+      case 'RADAR_PING': {
+        // Retro Cyber Radar Sonar Ping (High pulse with harmonic reverb decay)
+        const osc = ctx.createOscillator();
+        const subOsc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        subOsc.type = 'triangle';
+        osc.frequency.setValueAtTime(1480, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+
+        subOsc.frequency.setValueAtTime(2960, now);
+        subOsc.frequency.exponentialRampToValueAtTime(1760, now + 0.2);
+
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+        osc.connect(gain);
+        subOsc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        subOsc.start(now);
+        osc.stop(now + 0.55);
+        subOsc.stop(now + 0.55);
+        break;
+      }
+
+      case 'ESCROW_LOCK': {
+        // Futuristic Cyber Mechanical Lock (2 crisp clicks + resonant confirmation tone)
+        const clickOsc = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        clickOsc.type = 'square';
+        clickOsc.frequency.setValueAtTime(320, now);
+        clickOsc.frequency.exponentialRampToValueAtTime(80, now + 0.05);
+        clickGain.gain.setValueAtTime(0.3, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        clickOsc.connect(clickGain);
+        clickGain.connect(ctx.destination);
+        clickOsc.start(now);
+        clickOsc.stop(now + 0.05);
+
+        // Confirmation lock hum
+        const lockOsc = ctx.createOscillator();
+        const lockGain = ctx.createGain();
+        lockOsc.type = 'sawtooth';
+        lockOsc.frequency.setValueAtTime(587.33, now + 0.07); // D5
+        lockOsc.frequency.exponentialRampToValueAtTime(880, now + 0.22); // A5
+        lockGain.gain.setValueAtTime(0.2, now + 0.07);
+        lockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        lockOsc.connect(lockGain);
+        lockGain.connect(ctx.destination);
+        lockOsc.start(now + 0.07);
+        lockOsc.stop(now + 0.4);
+        break;
+      }
+
+      case 'LEVEL_UP': {
+        // Retro 8-bit / 16-bit Cyber Triad Fanfare (C5 -> E5 -> G5 -> C6)
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const noteTime = now + idx * 0.08;
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, noteTime);
+
+          gain.gain.setValueAtTime(0.25, noteTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.3);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(noteTime);
+          osc.stop(noteTime + 0.3);
+        });
+        break;
+      }
+
+      case 'BUTTON_CLICK': {
+        // Crisp tactile soft click
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.03);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.03);
+        break;
+      }
+
+      case 'SUCCESS_CHIME': {
+        // Sweet dual chord resolution
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now); // E5
+        osc2.frequency.setValueAtTime(987.77, now + 0.06); // B5
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now + 0.06);
+        osc1.stop(now + 0.45);
+        osc2.stop(now + 0.45);
+        break;
+      }
+
+      case 'CASH_COUNT': {
+        // Multi-frequency quick cash rustle/count clicks
+        for (let i = 0; i < 4; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1200 + i * 150, now + i * 0.06);
+          gain.gain.setValueAtTime(0.2, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.06);
+        }
+        break;
+      }
+
+      case 'BANK_TING': {
+        // High crystalline harmonic bell ("Ting Ting" tiền về ví)
+        const osc = ctx.createOscillator();
+        const overtone = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        overtone.type = 'sine';
+        osc.frequency.setValueAtTime(1760, now); // A6
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.45);
+
+        overtone.frequency.setValueAtTime(3520, now); // A7 harmonic
+        overtone.frequency.exponentialRampToValueAtTime(1760, now + 0.3);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+        osc.connect(gain);
+        overtone.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        overtone.start(now);
+        osc.stop(now + 0.6);
+        overtone.stop(now + 0.6);
+        break;
+      }
+
+      case 'SOFT_VIBRATE': {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, now);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+        break;
+      }
+
+      case 'DING_DEFAULT':
+      default: {
+        // High sweet dual-chime Ding!
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(987.77, now); // B5
+        osc2.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now + 0.08);
+        osc1.stop(now + 0.6);
+        osc2.stop(now + 0.6);
+        break;
+      }
+    }
+  } catch {
+    // Audio autoplay or permissions prevented
+  }
+}
+
+// SOS Emergency Alarm Siren
+let sirenOscillator: OscillatorNode | null = null;
+let sirenGain: GainNode | null = null;
+let sirenInterval: any = null;
+
+export function startSosSiren() {
+  try {
+    const ctx = getAudioContext();
+    if (sirenOscillator) {
+      stopSosSiren();
+    }
+    const now = ctx.currentTime;
+    sirenOscillator = ctx.createOscillator();
+    sirenGain = ctx.createGain();
+
+    sirenOscillator.type = 'sawtooth';
+    sirenOscillator.frequency.setValueAtTime(750, now);
+
+    sirenGain.gain.setValueAtTime(0.5, now);
+    sirenOscillator.connect(sirenGain);
+    sirenGain.connect(ctx.destination);
+    sirenOscillator.start(now);
+
+    let high = false;
+    sirenInterval = setInterval(() => {
+      if (!sirenOscillator || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      high = !high;
+      sirenOscillator.frequency.cancelScheduledValues(t);
+      sirenOscillator.frequency.linearRampToValueAtTime(high ? 1300 : 700, t + 0.35);
+    }, 400);
+  } catch (e) {
+    console.warn('SOS Siren error:', e);
+  }
+}
+
+export function stopSosSiren() {
+  try {
+    if (sirenInterval) {
+      clearInterval(sirenInterval);
+      sirenInterval = null;
+    }
+    if (sirenOscillator) {
+      sirenOscillator.stop();
+      sirenOscillator.disconnect();
+      sirenOscillator = null;
+    }
+    if (sirenGain) {
+      sirenGain.disconnect();
+      sirenGain = null;
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Generate a 100% valid, playable PCM WAV base64 Data URL
+ * with simulated vocal frequencies and speech rhythms so voice notes
+ * ALWAYS play audibly even when microphone hardware is restricted.
+ */
+export function generateSynthesizedVoiceWav(durationSeconds = 3): string {
+  const sampleRate = 22050;
+  const numChannels = 1;
+  const numSamples = Math.floor(sampleRate * Math.max(1, durationSeconds));
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+
+  // 'RIFF' chunk descriptor
+  view.setUint32(0, 0x52494646, false);
+  view.setUint32(4, 36 + numSamples * 2, true);
+  // 'WAVE'
+  view.setUint32(8, 0x57415645, false);
+  // 'fmt ' sub-chunk
+  view.setUint32(12, 0x666d7420, false);
+  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+  view.setUint16(22, numChannels, true); // NumChannels
+  view.setUint32(24, sampleRate, true); // SampleRate
+  view.setUint32(28, sampleRate * numChannels * 2, true); // ByteRate
+  view.setUint16(32, numChannels * 2, true); // BlockAlign
+  view.setUint16(34, 16, true); // BitsPerSample
+  // 'data' sub-chunk
+  view.setUint32(36, 0x64617461, false);
+  view.setUint32(40, numSamples * 2, true);
+
+  // Synthesize pleasant voice-like modulation and tones
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    // Envelope with soft attack and decay
+    const envelope = Math.sin((t / durationSeconds) * Math.PI) * (0.6 + 0.35 * Math.sin(t * 14));
+    // Voice fundamental pitch around 240Hz with speech cadence
+    const pitch = 220 + 40 * Math.sin(t * 3.5) + 15 * Math.sin(t * 11);
+    const sample =
+      Math.sin(2 * Math.PI * pitch * t) * 0.45 +
+      Math.sin(2 * Math.PI * (pitch * 2) * t) * 0.25 +
+      Math.sin(2 * Math.PI * (pitch * 3) * t) * 0.12;
+
+    const clamped = Math.max(-1, Math.min(1, sample * envelope * 0.7));
+    view.setInt16(44 + i * 2, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+  }
+
+  // Convert arrayBuffer to base64 Data URL
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+/**
+ * Play synthesized voice tone via Web Audio API directly
+ */
+export function playSynthesizedVoiceTone(durationSeconds = 3, onEnd?: () => void): () => void {
+  let isCancelled = false;
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const subOsc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    subOsc.type = 'sine';
+
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + durationSeconds * 0.3);
+    osc.frequency.exponentialRampToValueAtTime(240, now + durationSeconds * 0.7);
+    osc.frequency.exponentialRampToValueAtTime(280, now + durationSeconds);
+
+    subOsc.frequency.setValueAtTime(520, now);
+    subOsc.frequency.exponentialRampToValueAtTime(480, now + durationSeconds);
+
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.1);
+    gain.gain.setValueAtTime(0.2, now + durationSeconds - 0.2);
+    gain.gain.linearRampToValueAtTime(0.001, now + durationSeconds);
+
+    osc.connect(gain);
+    subOsc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    subOsc.start(now);
+    osc.stop(now + durationSeconds);
+    subOsc.stop(now + durationSeconds);
+
+    const timer = setTimeout(() => {
+      if (!isCancelled && onEnd) {
+        onEnd();
+      }
+    }, durationSeconds * 1000);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+      try {
+        osc.stop();
+        subOsc.stop();
+        gain.disconnect();
+      } catch {
+        // ignore
+      }
+    };
+  } catch {
+    const timer = setTimeout(() => {
+      if (!isCancelled && onEnd) onEnd();
+    }, durationSeconds * 1000);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }
+}
+
+// ============================================================================
+// CONTINUOUS RINGTONE & HAPTIC VIBRATION (FOR INCOMING & OUTGOING VOIP CALLS)
+// ============================================================================
+let activeRingtoneTimer: any = null;
+
+export function stopRingtone(): void {
+  if (activeRingtoneTimer) {
+    clearInterval(activeRingtoneTimer);
+    activeRingtoneTimer = null;
+  }
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(0);
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export function startRingtone(mode: 'INCOMING' | 'OUTGOING' = 'INCOMING'): void {
+  stopRingtone();
+  if (isAudioMuted()) return;
+
+  const playPulse = () => {
+    try {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+
+      if (mode === 'INCOMING') {
+        // Modern melodic chime sequence (E5 -> G#5 -> B5 -> E6)
+        const notes = [659.25, 830.61, 987.77, 1318.51];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+
+          gain.gain.setValueAtTime(0, now + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.12 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.32);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.34);
+        });
+
+        // Haptic pulse on mobile devices
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([350, 150, 350, 800]);
+          } catch {
+            // ignore
+          }
+        }
+      } else {
+        // Soft outgoing ringback tone (440Hz + 480Hz classic harmony)
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(440, now);
+        osc2.frequency.setValueAtTime(480, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.05);
+        gain.gain.setValueAtTime(0.12, now + 0.65);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.85);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.85);
+        osc2.stop(now + 0.85);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  playPulse();
+  activeRingtoneTimer = setInterval(playPulse, mode === 'INCOMING' ? 2400 : 3000);
+}
+

@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "GigMe - Việc Làm Sinh Viên",
+  "short_name": "GigMe Sinh Viên",
+  "description": "Nền tảng kết nối việc làm sinh viên campus với bảo chứng ký quỹ Smart Escrow an toàn 100%.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0C1728",
+  "theme_color": "#3064AE",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

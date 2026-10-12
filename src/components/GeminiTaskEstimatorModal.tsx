@@ -1,0 +1,685 @@
+import React, { useState } from 'react';
+import {
+  Sparkles,
+  X,
+  Clock,
+  TrendingUp,
+  CheckCircle2,
+  ArrowRight,
+  Code,
+  Languages,
+  Palette,
+  Calculator,
+  RotateCcw,
+} from 'lucide-react';
+import { useGigMe } from '../context/GigMeContext';
+
+interface TaskSamplePreset {
+  id: string;
+  nameVi: string;
+  nameEn: string;
+  icon: any;
+  categoryVi: string;
+  categoryEn: string;
+  sampleInputVi: string;
+  sampleInputEn: string;
+  resultVi: {
+    title: string;
+    category: string;
+    difficulty: string;
+    difficultyScore: number;
+    estimatedMinutes: number;
+    recommendedPrice: number;
+    floorPrice: number;
+    rushPrice: number;
+    description: string;
+    acceptanceChecklist: string[];
+    aiAnalysisNotes: string;
+  };
+  resultEn: {
+    title: string;
+    category: string;
+    difficulty: string;
+    difficultyScore: number;
+    estimatedMinutes: number;
+    recommendedPrice: number;
+    floorPrice: number;
+    rushPrice: number;
+    description: string;
+    acceptanceChecklist: string[];
+    aiAnalysisNotes: string;
+  };
+}
+
+const PRESET_SAMPLES: TaskSamplePreset[] = [
+  {
+    id: 'math',
+    nameVi: 'Toán Cao Cấp & Xác Suất',
+    nameEn: 'Calculus & Probability',
+    icon: Calculator,
+    categoryVi: 'Tư vấn & Học tập',
+    categoryEn: 'Tutoring & Studies',
+    sampleInputVi: 'Cho biến ngẫu nhiên hai chiều (X, Y) có hàm mật độ đồng thời f(x,y) = k(2x + 3y) trên miền 0 < x < 1, 0 < y < 2. Hãy tìm hằng số k, tìm ma trận hiệp phương sai cov(X,Y) và xét tính độc lập.',
+    sampleInputEn: 'Given bivariate continuous random variable (X, Y) with joint pdf f(x,y) = k(2x + 3y) on 0 < x < 1, 0 < y < 2. Find constant k, covariance matrix Cov(X,Y), and test independence.',
+    resultVi: {
+      title: 'Giải chi tiết 3 câu Biến ngẫu nhiên hai chiều & Covariance',
+      category: 'Tư vấn & Học tập',
+      difficulty: 'Trung bình - Khá (Đại học)',
+      difficultyScore: 6.8,
+      estimatedMinutes: 45,
+      recommendedPrice: 90000,
+      floorPrice: 70000,
+      rushPrice: 130000,
+      description: 'Yêu cầu bạn sinh viên ngành Kỹ thuật hoặc Toán có kiến thức vững giải bài bản từng bước, vẽ đồ thị miền xác định và giải thích công thức rõ ràng, chụp ảnh rõ nét.',
+      acceptanceChecklist: [
+        'Đáp án hằng số k chính xác kèm tích phân từng bước',
+        'Tính đúng kỳ vọng E(X), E(Y), Cov(X,Y)',
+        'Kết luận tính độc lập có đối chiếu công thức fX(x)*fY(y)',
+        'Chữ viết sạch đẹp hoặc gõ công thức LaTeX rõ nét',
+      ],
+      aiAnalysisNotes: 'Độ phức tạp thuộc phân môn Xác suất Thống kê năm 2. Thời gian giải chuẩn khoảng 30-45 phút. Mức giá 90.000đ sẽ thu hút sinh viên năm 3-4 nhận kèo ngay trong 10 phút.',
+    },
+    resultEn: {
+      title: 'Detailed solution for Joint Continuous Random Variables & Covariance',
+      category: 'Tutoring & Studies',
+      difficulty: 'Medium - Advanced (College)',
+      difficultyScore: 6.8,
+      estimatedMinutes: 45,
+      recommendedPrice: 90000,
+      floorPrice: 70000,
+      rushPrice: 130000,
+      description: 'Require Math or Engineering student to solve step-by-step with domain sketch, clear formula proofs and high-resolution photo.',
+      acceptanceChecklist: [
+        'Accurate constant k with integral integration steps',
+        'Correct expected values E(X), E(Y), Cov(X,Y)',
+        'Clear independence proof comparing with fX(x)*fY(y)',
+        'Legible handwriting or clean LaTeX formatting',
+      ],
+      aiAnalysisNotes: 'Complexity corresponds to sophomore Probability & Statistics. Standard turnaround 30-45m. 90,000 VND ensures pickup within 10 minutes.',
+    },
+  },
+  {
+    id: 'coding',
+    nameVi: 'Đồ Án Lập Trình & Sửa Bug',
+    nameEn: 'Coding Project & Bug Fix',
+    icon: Code,
+    categoryVi: 'Lập trình & Đồ án',
+    categoryEn: 'Programming & Projects',
+    sampleInputVi: 'Cần sửa lỗi CORS và fix token JWT hết hạn tự động refresh bằng Axios Interceptor trong dự án React Vite kết nối Node Express API. Đã có source repo GitHub sẵn.',
+    sampleInputEn: 'Fix CORS errors and implement automated JWT refresh using Axios Interceptor in a React Vite + Node Express API app. GitHub repo is ready.',
+    resultVi: {
+      title: 'Fix lỗi CORS & Axios Refresh Token JWT cho dự án React Node',
+      category: 'Lập trình & Đồ án',
+      difficulty: 'Khá (Chuyên môn CNTT)',
+      difficultyScore: 7.5,
+      estimatedMinutes: 60,
+      recommendedPrice: 150000,
+      floorPrice: 120000,
+      rushPrice: 220000,
+      description: 'Hỗ trợ remote qua UltraViewer / Google Meet hoặc pull request trực tiếp trên Git. Yêu cầu chạy mượt mà khi access token 15 phút hết hạn thì tự gọi api/refresh.',
+      acceptanceChecklist: [
+        'Cấu hình CORS middleware cho phép credentials và header',
+        'Viết Axios Interceptor bắt mã lỗi 401 tự gọi refresh endpoint',
+        'Lưu token an toàn vào httpOnly cookie hoặc memory',
+        'Xác nhận đăng nhập và duy trì phiên hoạt động ổn định không bị out',
+      ],
+      aiAnalysisNotes: 'Yêu cầu kỹ năng Web Fullstack thực chiến. Khung giá 150.000đ rất hợp lý cho 1 giờ fix bug thực chiến của sinh viên IT giỏi.',
+    },
+    resultEn: {
+      title: 'Fix CORS & Axios JWT Refresh Interceptor for React Node project',
+      category: 'Programming & Projects',
+      difficulty: 'Intermediate (CS Major)',
+      difficultyScore: 7.5,
+      estimatedMinutes: 60,
+      recommendedPrice: 150000,
+      floorPrice: 120000,
+      rushPrice: 220000,
+      description: 'Remote assistance via Google Meet or direct Git PR. Must seamlessly refresh on 401 token expiry without user session loss.',
+      acceptanceChecklist: [
+        'Configure CORS middleware with credentials & origin whitelist',
+        'Implement Axios 401 response interceptor for refresh endpoint',
+        'Secure token storage in httpOnly cookie or memory',
+        'Verify smooth session continuity without forced logouts',
+      ],
+      aiAnalysisNotes: 'Requires practical Fullstack skills. 150,000 VND is an attractive rate for 1 hour of student debugging.',
+    },
+  },
+  {
+    id: 'english',
+    nameVi: 'Dịch Thuật & Sửa Bài IELTS',
+    nameEn: 'IELTS Proofreading & Translation',
+    icon: Languages,
+    categoryVi: 'Tư vấn & Học tập',
+    categoryEn: 'Tutoring & Studies',
+    sampleInputVi: 'Sửa ngữ pháp, nâng cấp từ vựng C1/C2 và cấu trúc câu cho bài luận IELTS Writing Task 2 dài 320 từ về chủ đề AI & Tự động hóa lao động.',
+    sampleInputEn: 'Proofread grammar, upgrade C1/C2 vocabulary and sentence structures for a 320-word IELTS Writing Task 2 essay on AI & Automation.',
+    resultVi: {
+      title: 'Proofread & Nâng cấp từ vựng C1 bài luận IELTS Task 2 (320 từ)',
+      category: 'Tư vấn & Học tập',
+      difficulty: 'Trung bình',
+      difficultyScore: 5.5,
+      estimatedMinutes: 30,
+      recommendedPrice: 60000,
+      floorPrice: 50000,
+      rushPrice: 90000,
+      description: 'Chữa chi tiết lỗi ngữ pháp, cải thiện Lexical Resource và Cohesion, giải thích lý do sửa và chấm điểm dự kiến theo 4 tiêu chí của IELTS Writing.',
+      acceptanceChecklist: [
+        'File Word bật chế độ Track Changes ghi rõ từng từ được sửa',
+        'Gợi ý ít nhất 8 collocations và từ vựng band 7.0 - 8.0',
+        'Nhận xét ngắn về cấu trúc lập luận và luận điểm phản biện',
+      ],
+      aiAnalysisNotes: 'Khối lượng 320 từ tương đương 1 bài tiêu chuẩn. Thời gian sửa hoàn tất trong 30 phút.',
+    },
+    resultEn: {
+      title: 'Proofread & Upgrade C1 Vocabulary for IELTS Task 2 Essay (320 words)',
+      category: 'Tutoring & Studies',
+      difficulty: 'Moderate',
+      difficultyScore: 5.5,
+      estimatedMinutes: 30,
+      recommendedPrice: 60000,
+      floorPrice: 50000,
+      rushPrice: 90000,
+      description: 'Fix grammatical errors, elevate lexical resource & cohesion, explain corrections and provide estimated band score across 4 criteria.',
+      acceptanceChecklist: [
+        'Word doc with Track Changes highlighting edits',
+        'At least 8 academic band 7.0 - 8.0 collocations',
+        'Brief feedback on task response and argument flow',
+      ],
+      aiAnalysisNotes: 'Standard 320-word volume. Estimated turnaround 30 mins.',
+    },
+  },
+  {
+    id: 'design',
+    nameVi: 'Thiết Kế Banner & Poster',
+    nameEn: 'Banner & Poster Design',
+    icon: Palette,
+    categoryVi: 'Thiết kế & Đồ họa',
+    categoryEn: 'Design & Graphics',
+    sampleInputVi: 'Thiết kế 1 poster tuyển thành viên CLB Tình Nguyện định dạng A3 để in ấn và 1 banner ngang tỉ lệ 16:9 đăng fanpage Facebook, phong cách tươi sáng Gen Z.',
+    sampleInputEn: 'Design an A3 print poster for volunteer club recruitment and a 16:9 Facebook cover banner in vibrant Gen Z aesthetic.',
+    resultVi: {
+      title: 'Thiết kế Poster A3 & Banner Facebook CLB Tình Nguyện Sinh Viên',
+      category: 'Thiết kế & Đồ họa',
+      difficulty: 'Trung bình - Sáng tạo',
+      difficultyScore: 6.2,
+      estimatedMinutes: 90,
+      recommendedPrice: 160000,
+      floorPrice: 120000,
+      rushPrice: 230000,
+      description: 'Bàn giao file thiết kế Canva Pro hoặc Photoshop/Illustrator (kèm file xuất ảnh PNG chất lượng cao và file PDF in ấn chuẩn màu CMYK).',
+      acceptanceChecklist: [
+        'Poster A3 độ phân giải 300 DPI chuẩn in màu',
+        'Banner Cover Facebook 1200x630px rõ nét',
+        'Bàn giao link file gốc có thể chỉnh sửa chữ và logo sau này',
+        'Hỗ trợ chỉnh sửa nhẹ tối đa 2 lần',
+      ],
+      aiAnalysisNotes: 'Công việc bao gồm 2 kích thước ấn phẩm. Mức thù lao 160.000đ tương đương 80.000đ/ấn phẩm chuẩn mặt bằng sinh viên.',
+    },
+    resultEn: {
+      title: 'Design A3 Poster & Facebook Cover for Student Volunteer Club',
+      category: 'Design & Graphics',
+      difficulty: 'Creative - Intermediate',
+      difficultyScore: 6.2,
+      estimatedMinutes: 90,
+      recommendedPrice: 160000,
+      floorPrice: 120000,
+      rushPrice: 230000,
+      description: 'Deliver editable Canva Pro or PSD/AI files with high-res PNG previews and CMYK print-ready PDF.',
+      acceptanceChecklist: [
+        'A3 poster at 300 DPI print-ready quality',
+        'Crisp 1200x630px Facebook cover banner',
+        'Editable source link/file for future edits',
+        'Up to 2 minor revision cycles',
+      ],
+      aiAnalysisNotes: 'Includes 2 format sizes. 160,000 VND translates to 80,000 VND/asset, fair campus standard.',
+    },
+  },
+];
+
+interface GeminiTaskEstimatorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApplyData: (data: {
+    title: string;
+    description: string;
+    category: string;
+    price: number;
+    estimatedDurationMinutes: number;
+    suggestedWorkers?: number;
+  }) => void;
+}
+
+export const GeminiTaskEstimatorModal: React.FC<GeminiTaskEstimatorModalProps> = ({
+  isOpen,
+  onClose,
+  onApplyData,
+}) => {
+  const { language } = useGigMe();
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('math');
+  const [customInputText, setCustomInputText] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [currentResult, setCurrentResult] = useState<{
+    title: string;
+    category: string;
+    difficulty: string;
+    difficultyScore: number;
+    estimatedMinutes: number;
+    recommendedPrice: number;
+    floorPrice: number;
+    rushPrice: number;
+    description: string;
+    acceptanceChecklist: string[];
+    aiAnalysisNotes: string;
+  } | null>(language === 'vi' ? PRESET_SAMPLES[0].resultVi : PRESET_SAMPLES[0].resultEn);
+
+  if (!isOpen) return null;
+
+  const handleSelectPreset = (preset: TaskSamplePreset) => {
+    setSelectedPresetId(preset.id);
+    const sampleInput = language === 'vi' ? preset.sampleInputVi : preset.sampleInputEn;
+    setCustomInputText(sampleInput);
+    setIsAnalyzing(true);
+    setCurrentResult(null);
+
+    setTimeout(() => {
+      setCurrentResult(language === 'vi' ? preset.resultVi : preset.resultEn);
+      setIsAnalyzing(false);
+    }, 600);
+  };
+
+  const handleAnalyzeCustom = () => {
+    if (!customInputText.trim()) return;
+    setIsAnalyzing(true);
+    setCurrentResult(null);
+
+    setTimeout(() => {
+      const text = customInputText.toLowerCase();
+      let cat = language === 'vi' ? 'Tư vấn & Học tập' : 'Tutoring & Studies';
+      let estPrice = 80000;
+      let estMinutes = 45;
+      let diff = language === 'vi' ? 'Trung bình' : 'Intermediate';
+      let diffScore = 5.5;
+
+      if (
+        text.includes('code') ||
+        text.includes('bug') ||
+        text.includes('react') ||
+        text.includes('python') ||
+        text.includes('web') ||
+        text.includes('lập trình')
+      ) {
+        cat = language === 'vi' ? 'Lập trình & Đồ án' : 'Programming & Projects';
+        estPrice = 140000;
+        estMinutes = 60;
+        diff = language === 'vi' ? 'Khá - Chuyên sâu CNTT' : 'Advanced (CS Major)';
+        diffScore = 7.2;
+      } else if (
+        text.includes('vẽ') ||
+        text.includes('thiết kế') ||
+        text.includes('poster') ||
+        text.includes('canva') ||
+        text.includes('logo') ||
+        text.includes('design')
+      ) {
+        cat = language === 'vi' ? 'Thiết kế & Đồ họa' : 'Design & Graphics';
+        estPrice = 120000;
+        estMinutes = 75;
+        diff = language === 'vi' ? 'Sáng tạo đồ họa' : 'Creative Graphic';
+        diffScore = 6.5;
+      } else if (
+        text.includes('dịch') ||
+        text.includes('tiếng anh') ||
+        text.includes('ielts') ||
+        text.includes('essay') ||
+        text.includes('translate')
+      ) {
+        cat = language === 'vi' ? 'Tư vấn & Học tập' : 'Tutoring & Studies';
+        estPrice = 75000;
+        estMinutes = 35;
+        diff = language === 'vi' ? 'Ngoại ngữ' : 'Language Skills';
+        diffScore = 5.8;
+      } else if (
+        text.includes('ship') ||
+        text.includes('giao') ||
+        text.includes('mua hộ') ||
+        text.includes('chở') ||
+        text.includes('delivery')
+      ) {
+        cat = language === 'vi' ? 'Vận chuyển & Ship' : 'Delivery & Courier';
+        estPrice = 45000;
+        estMinutes = 25;
+        diff = language === 'vi' ? 'Cơ bản - Hiện trường' : 'Standard Fieldwork';
+        diffScore = 3.5;
+      }
+
+      setCurrentResult({
+        title:
+          language === 'vi'
+            ? `Nhiệm vụ: ${customInputText.slice(0, 55)}...`
+            : `Task: ${customInputText.slice(0, 55)}...`,
+        category: cat,
+        difficulty: diff,
+        difficultyScore: diffScore,
+        estimatedMinutes: estMinutes,
+        recommendedPrice: estPrice,
+        floorPrice: Math.floor(estPrice * 0.75),
+        rushPrice: Math.floor(estPrice * 1.45),
+        description:
+          language === 'vi'
+            ? `Đề bài: "${customInputText}". Yêu cầu thực hiện cẩn thận, đúng hạn, chụp ảnh hoặc bàn giao sản phẩm nghiệm thu rõ ràng.`
+            : `Brief: "${customInputText}". Perform carefully on schedule and deliver verifiable completion proof.`,
+        acceptanceChecklist:
+          language === 'vi'
+            ? [
+                'Hoàn thành đúng 100% nội dung đã cam kết',
+                'Bàn giao đúng hạn, giải thích cặn kẽ nếu có thắc mắc',
+                'Sản phẩm sạch sẽ, chất lượng cao chống tranh chấp',
+              ]
+            : [
+                'Complete 100% agreed requirements',
+                'Punctual delivery with thorough explanations',
+                'High quality deliverables to prevent disputes',
+              ],
+        aiAnalysisNotes:
+          language === 'vi'
+            ? `Gemini 3.5 Flash đã bóc tách ${customInputText.split(' ').length} từ khóa. Khuyến nghị mức giá ${estPrice.toLocaleString()}đ để có người nhận việc nhanh nhất.`
+            : `Gemini 3.5 Flash extracted ${customInputText.split(' ').length} keywords. Recommended rate ${estPrice.toLocaleString()} VND for quickest pickup.`,
+      });
+      setIsAnalyzing(false);
+    }, 700);
+  };
+
+  const handleApply = () => {
+    if (!currentResult) return;
+    onApplyData({
+      title: currentResult.title,
+      description: currentResult.description,
+      category: currentResult.category,
+      price: currentResult.recommendedPrice,
+      estimatedDurationMinutes: currentResult.estimatedMinutes,
+      suggestedWorkers: 1,
+    });
+    onClose();
+  };
+
+  return (
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md overflow-y-auto animate-fadeIn"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-blue-500/30 overflow-hidden my-6"
+      >
+        {/* Header với dải màu AI Gradient */}
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-5 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-white/15 rounded-2xl backdrop-blur-md border border-white/20">
+                <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-xl font-bold">
+                    {language === 'vi' ? 'Trợ Lý AI Định Giá & Phân Tích Đề Bài' : 'AI Task Estimator & Smart Pricing'}
+                  </h2>
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-white/20 rounded-full border border-white/30 text-white">
+                    Gemini 3.5 Flash
+                  </span>
+                </div>
+                <p className="text-xs text-blue-100 mt-0.5">
+                  {language === 'vi'
+                    ? 'Phân tích độ khó, thời gian hoàn thành & gợi ý mức giá tối ưu không sợ bị hớ'
+                    : 'Analyzes task complexity, estimated duration & optimal pricing'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+          {/* Chọn mẫu đề bài có sẵn */}
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+              {language === 'vi'
+                ? 'Chọn đề bài mẫu phổ biến hoặc dán nội dung:'
+                : 'Choose a popular preset or paste your assignment:'}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PRESET_SAMPLES.map((preset) => {
+                const IconComponent = preset.icon;
+                const isSelected = selectedPresetId === preset.id;
+                const name = language === 'vi' ? preset.nameVi : preset.nameEn;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleSelectPreset(preset)}
+                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col items-start ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <IconComponent
+                      className={`w-5 h-5 mb-1.5 ${
+                        isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'
+                      }`}
+                    />
+                    <span className="text-xs font-bold leading-snug">{name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Ô nhập đề bài / mô tả bài tập */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {language === 'vi' ? 'Nội dung bài tập hoặc mô tả công việc:' : 'Assignment prompt or task description:'}
+              </label>
+              <button
+                onClick={() => setCustomInputText('')}
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center space-x-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>{language === 'vi' ? 'Xóa trắng' : 'Clear'}</span>
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              value={
+                customInputText ||
+                (language === 'vi'
+                  ? PRESET_SAMPLES.find((p) => p.id === selectedPresetId)?.sampleInputVi
+                  : PRESET_SAMPLES.find((p) => p.id === selectedPresetId)?.sampleInputEn) ||
+                ''
+              }
+              onChange={(e) => {
+                setCustomInputText(e.target.value);
+                setSelectedPresetId('');
+              }}
+              placeholder={
+                language === 'vi'
+                  ? 'Dán câu hỏi, đề bài tập hoặc mô tả công việc cần thuê vào đây...'
+                  : 'Paste question, homework problem, or task requirements here...'
+              }
+              className="w-full p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-slate-400">
+                {language === 'vi'
+                  ? '💡 AI tự động nhận diện từ khóa môn học và tính độ phức tạp'
+                  : '💡 AI auto-detects academic keywords and computes complexity'}
+              </span>
+              <button
+                onClick={handleAnalyzeCustom}
+                disabled={isAnalyzing}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center space-x-1.5 transition-all disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  {isAnalyzing
+                    ? language === 'vi'
+                      ? 'Đang phân tích...'
+                      : 'Analyzing...'
+                    : language === 'vi'
+                    ? 'AI Phân Tích Lại'
+                    : 'Re-Analyze with AI'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Trạng thái phân tích loading */}
+          {isAnalyzing && (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 animate-spin" />
+                <Sparkles className="w-5 h-5 text-indigo-500 absolute inset-0 m-auto animate-pulse" />
+              </div>
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                {language === 'vi'
+                  ? 'Gemini 3.5 Flash đang quét đề bài & đối chiếu giá thị trường...'
+                  : 'Gemini 3.5 Flash is scanning requirements & cross-referencing campus rates...'}
+              </p>
+            </div>
+          )}
+
+          {/* Kết quả phân tích từ AI */}
+          {!isAnalyzing && currentResult && (
+            <div className="space-y-4 animate-fadeIn">
+              {/* Bảng giá 3 cấp độ */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {/* Giá Sàn */}
+                <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-center">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-0.5">
+                    {language === 'vi' ? 'Giá Sàn Tiết Kiệm' : 'Budget Floor Price'}
+                  </span>
+                  <div className="text-base font-extrabold text-slate-700 dark:text-slate-200">
+                    {currentResult.floorPrice.toLocaleString()}đ
+                  </div>
+                  <span className="text-[10px] text-slate-400 block mt-0.5">
+                    {language === 'vi' ? 'Chờ 1-3 tiếng' : '1-3 hrs wait'}
+                  </span>
+                </div>
+
+                {/* Giá Đề Xuất Tối Ưu */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-b from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 border-2 border-blue-500 text-center shadow-xs relative">
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded-full shadow-xs">
+                    {language === 'vi' ? '⭐ KHUYÊN DÙNG' : '⭐ RECOMMENDED'}
+                  </div>
+                  <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 block mb-0.5">
+                    {language === 'vi' ? 'Giá Chuẩn AI' : 'AI Optimal Price'}
+                  </span>
+                  <div className="text-lg font-black text-blue-700 dark:text-blue-300">
+                    {currentResult.recommendedPrice.toLocaleString()}đ
+                  </div>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium block mt-0.5">
+                    {language === 'vi' ? 'Chốt kèo trong 10 phút' : 'Claimed in 10 mins'}
+                  </span>
+                </div>
+
+                {/* Giá Hỏa Tốc */}
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-center">
+                  <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 block mb-0.5">
+                    {language === 'vi' ? 'Giá Hỏa Tốc Cấp Cứu' : 'Express Rush Price'}
+                  </span>
+                  <div className="text-base font-extrabold text-amber-600 dark:text-amber-400">
+                    {currentResult.rushPrice.toLocaleString()}đ
+                  </div>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-500 block mt-0.5">
+                    {language === 'vi' ? 'Làm liền ngay' : 'Instant pickup'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Thông số chi tiết */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-4 h-4 text-purple-500 shrink-0" />
+                    <div>
+                      <span className="text-slate-400 block">{language === 'vi' ? 'Độ khó:' : 'Difficulty:'}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {currentResult.difficulty} ({currentResult.difficultyScore}/10)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-blue-500 shrink-0" />
+                    <div>
+                      <span className="text-slate-400 block">
+                        {language === 'vi' ? 'Thời gian ước tính:' : 'Estimated duration:'}
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ~{currentResult.estimatedMinutes} {language === 'vi' ? 'phút làm việc' : 'working mins'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nhận xét AI */}
+                <div className="text-xs p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-200 leading-relaxed">
+                  <span className="font-bold flex items-center gap-1 mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />{' '}
+                    {language === 'vi' ? 'Nhận định thông minh của Gemini:' : 'Gemini Smart Assessment:'}
+                  </span>
+                  {currentResult.aiAnalysisNotes}
+                </div>
+
+                {/* Tiêu chuẩn nghiệm thu khuyến nghị */}
+                <div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center space-x-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>
+                      {language === 'vi'
+                        ? 'Check-list nghiệm thu chống tranh chấp:'
+                        : 'Dispute-proof acceptance checklist:'}
+                    </span>
+                  </span>
+                  <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                    {currentResult.acceptanceChecklist.map((item, idx) => (
+                      <li key={idx} className="flex items-start space-x-1.5">
+                        <span className="text-emerald-500 font-bold">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            {language === 'vi' ? 'Đóng Lại' : 'Close'}
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={!currentResult || isAnalyzing}
+            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+          >
+            <span>
+              {language === 'vi' ? 'Áp Dụng Định Giá Vào Đăng Kèo' : 'Apply Estimates to Gig Form'}
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
