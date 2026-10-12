@@ -364,8 +364,8 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
       sender: 'AI',
       text:
         language === 'vi'
-          ? 'Xin chào bạn! Mình là Trợ lý AI GigMe. Mình luôn sẵn sàng giải đáp mọi câu hỏi của bạn về GigMe'
-          : 'Hello! I am GigMe AI Assistant. I am always ready to help you with any questions about GigMe!',
+          ? '👋 Xin chào bạn! Mình là Trợ Lý Thông Minh GigMe 24/7. Mình đồng hành, hỗ trợ và bảo vệ quyền lợi sinh viên trên nền tảng Chợ việc làm & Ký quỹ Smart Escrow KTX - Đại học Việt Nam.\n\nBạn cần mình giải đáp thắc mắc hoặc hỗ trợ xử lý tình huống nào trên campus hôm nay?'
+          : '👋 Hello! I am GigMe Smart Assistant 24/7. I accompany, support, and protect students on the GigMe Campus job & Smart Escrow platform.\n\nHow can I help you today?',
       time: language === 'vi' ? 'Trực tuyến' : 'Online',
     },
   ]);
@@ -1536,12 +1536,85 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
     }
   };
 
+  // Reusable Modal Xác Nhận Thu Hồi Tin Nhắn
+  const renderRecallModal = () => {
+    if (!recallConfirmMsgId) return null;
+    return (
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setRecallConfirmMsgId(null);
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-sm rounded-3xl bg-[#0E1B2E] border border-[#3064AE]/40 p-5 shadow-2xl text-slate-100 animate-modal-in"
+        >
+          <div className="flex items-center space-x-2.5 mb-3 text-rose-400">
+            <div className="w-9 h-9 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+              <RotateCcw className="w-5 h-5 text-rose-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-extrabold text-base leading-tight">
+                {language === 'vi' ? 'Thu hồi tin nhắn?' : 'Recall message?'}
+              </h3>
+              <span className="text-[11px] text-slate-400">
+                {language === 'vi' ? 'Hành động không thể hoàn tác' : 'Action cannot be undone'}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-300 leading-relaxed mb-5 bg-[#12233B]/60 p-3 rounded-2xl border border-white/5">
+            {language === 'vi'
+              ? 'Tin nhắn này sẽ bị thu hồi với tất cả mọi người trong cuộc trò chuyện. Các tệp đính kèm và ghim (nếu có) sẽ bị xóa hoàn toàn.'
+              : 'This message will be unsent for everyone in this conversation. Any attachments and pins will be permanently removed.'}
+          </p>
+
+          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setRecallConfirmMsgId(null)}
+              className="px-4 py-2 rounded-xl bg-[#12233B] hover:bg-[#162B48] text-slate-300 font-semibold text-xs border border-white/10 transition cursor-pointer"
+            >
+              {language === 'vi' ? 'Hủy' : 'Cancel'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const targetId = recallConfirmMsgId;
+                setRecallConfirmMsgId(null);
+                setActiveOptionsMenuMsgId(null);
+                if (!targetId) return;
+                const res = recallChatMessage(targetId);
+
+                if (res.success) {
+                  triggerHaptic('success');
+                } else {
+                  triggerHaptic('error');
+                  showNotification(
+                    language === 'vi' ? 'Lỗi Thu Hồi' : 'Recall Error',
+                    res.error || 'Unknown error',
+                    false
+                  );
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-rose-900/40 transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              {language === 'vi' ? 'Thu hồi với mọi người' : 'Unsend for everyone'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ==========================================
   // VIEW 1: 24/7 AI CAMPUS ASSISTANT CHAT ROOM
   // ==========================================
   if (activeConversationId === 'AI_ASSISTANT') {
     return (
-      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-3 flex flex-col h-[calc(100vh-4.5rem)] pb-20">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-3 flex flex-col h-[calc(100dvh-4.5rem)] pb-20">
         {/* Messenger Header for AI */}
         <div className="flex items-center justify-between pb-3 border-b border-[#C5E5EC]/15 shrink-0">
           <div className="flex items-center space-x-3">
@@ -1584,16 +1657,26 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
         <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar shrink-0 text-[11px]">
           {(language === 'vi'
             ? [
-                '🛡️ Smart Escrow hoạt động ra sao?',
-                '⚡ Rút tiền Napas 247 bao lâu?',
-                '⭐ Mẹo tăng điểm ELO sinh viên?',
-                '⚠️ Khiếu nại khi đối tác trễ hẹn?',
+                '🛡️ Smart Escrow chống bùng cọc ra sao?',
+                '⚡ Nạp VietQR & Rút Napas 24/7 tức thì?',
+                '🚫 Đối tác rủ add Zalo giao dịch riêng?',
+                '⏳ Đã làm xong nhưng chưa được giải ngân?',
+                '⚠️ Tranh chấp khi việc không đúng yêu cầu?',
+                '📦 Kiện hàng kín / Yêu cầu cọc tiền trước?',
+                '⭐ Cơ chế điểm ELO & Chuỗi thắng (Streak)?',
+                '📄 Quét CCCD NFC & OCR Thẻ sinh viên?',
+                '🏃 Bận thi đột xuất có được hủy việc?',
               ]
             : [
-                '🛡️ How does Smart Escrow work?',
-                '⚡ How fast is 24/7 Napas payout?',
-                '⭐ Tips to boost Student ELO?',
-                '⚠️ How to dispute late delivery?',
+                '🛡️ How does Smart Escrow prevent scam?',
+                '⚡ VietQR deposit & Instant Napas payout?',
+                '🚫 Partner asked to trade outside via Zalo?',
+                '⏳ Finished task but client hasn’t released?',
+                '⚠️ Disputing poor quality or wrong task?',
+                '📦 Suspicious closed package / deposit upfront?',
+                '⭐ Student ELO rating & Win Streak system?',
+                '📄 NFC CCCD scan & Student ID card OCR?',
+                '🏃 Can I cancel task if busy with exam?',
               ]
           ).map((chip, idx) => (
             <button
@@ -1752,7 +1835,7 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
     };
 
     return (
-      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-2 flex flex-col h-[calc(100vh-4.5rem)] pb-20">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-2 flex flex-col h-[calc(100dvh-4.5rem)] pb-20">
         {/* MESSENGER TOP APP BAR */}
         <div className="flex items-center justify-between pb-2.5 border-b border-[#C5E5EC]/15 shrink-0">
           <div className="flex items-center space-x-2.5 min-w-0">
@@ -2675,7 +2758,8 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
                                       return;
                                     }
 
-                                  setRecallConfirmMsgId(msg.id);
+                                    setActiveOptionsMenuMsgId(null);
+                                    setRecallConfirmMsgId(msg.id);
                                   }}
                                   className={`w-full text-left px-2.5 py-2 rounded-xl flex items-center justify-between text-xs transition mt-0.5 ${
                                     isUnder24h
@@ -3400,6 +3484,9 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
             </div>
           </div>
         )}
+
+        {/* Modal Xác Nhận Thu Hồi Tin Nhắn Trong Phòng Chat (VIEW 2) */}
+        {renderRecallModal()}
       </div>
     );
   }
@@ -3408,7 +3495,7 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
   // VIEW 3: MAIN INBOX LIST (MESSENGER FOR CAMPUS)
   // ==========================================
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 flex flex-col h-[calc(100vh-4rem)] pb-24 text-slate-100">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 flex flex-col h-[calc(100dvh-4rem)] pb-24 text-slate-100">
       {/* MESSENGER TOP BAR */}
       <div className="flex items-center justify-between pb-3 border-b border-[#C5E5EC]/15 shrink-0">
         <div className="flex items-center space-x-2.5">
@@ -4106,12 +4193,14 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
             const lastMsg = getLastMessageForContact(contact.id, contact.associatedGig?.id);
             const unreadCount = getUnreadCountForContact(contact.id, contact.associatedGig?.id);
             const previewText = lastMsg
-              ? lastMsg.message ||
-                (lastMsg.attachmentType === 'IMAGE'
-                  ? (language === 'vi' ? '📷 Hình ảnh' : '📷 Photo')
-                  : lastMsg.attachmentType === 'FILE'
-                  ? (language === 'vi' ? '📁 Tệp đính kèm' : '📁 File attachment')
-                  : (language === 'vi' ? '🎙️ Tin nhắn thoại' : '🎙️ Voice message'))
+              ? lastMsg.isRecalled
+                ? (language === 'vi' ? '↩️ Tin nhắn đã được thu hồi' : '↩️ Message has been withdrawn')
+                : lastMsg.message ||
+                  (lastMsg.attachmentType === 'IMAGE'
+                    ? (language === 'vi' ? '📷 Hình ảnh' : '📷 Photo')
+                    : lastMsg.attachmentType === 'FILE'
+                    ? (language === 'vi' ? '📁 Tệp đính kèm' : '📁 File attachment')
+                    : (language === 'vi' ? '🎙️ Tin nhắn thoại' : '🎙️ Voice message'))
               : contact.specialtyOrNeed;
             const timeText = lastMsg
               ? new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -4312,184 +4401,9 @@ export const ChatSupportScreen: React.FC<ChatSupportScreenProps> = ({ onBack }) 
           onClose={() => setShowTermsModal(false)}
         />
       )}
-                   {/* Right Metadata */}
-                <div className="text-right shrink-0 flex flex-col items-end space-y-1 pl-2">
-                  <span className={`text-[11px] font-medium ${unreadCount > 0 ? 'text-[#E0FAEB] font-bold' : 'text-[#C5E5EC]/70'}`}>
-                    {timeText}
-                  </span>
-                  <div className="flex items-center space-x-1.5">
-                    {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#E0FAEB] text-[#09111D] text-[9px] font-extrabold">
-                        {language === 'vi' ? 'Mới' : 'New'}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-[#C5E5EC]/90 font-medium bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
-                      {contact.school}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
 
-      {/* MODAL: START NEW CHAT WITH ANY STUDENT */}
-      {showNewChatModal && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowNewChatModal(false);
-          }}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-3xl bg-[#0E1B2E] border border-[#C5E5EC]/30 p-5 shadow-2xl text-slate-100 flex flex-col max-h-[80vh]"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5E5EC]/15 shrink-0">
-              <h4 className="font-extrabold text-sm text-white flex items-center space-x-1.5">
-                <MessageCircle className="w-4 h-4 text-[#C5E5EC]" />
-                <span>{language === 'vi' ? 'Soạn tin nhắn mới' : 'Compose New Message'}</span>
-              </h4>
-              <button
-                onClick={() => setShowNewChatModal(false)}
-                className="p-1 rounded-full text-[#C5E5EC]/70 hover:text-white cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[#C5E5EC]/70 my-2 shrink-0">
-              {language === 'vi'
-                ? 'Chọn người thuê hoặc người làm để bắt đầu cuộc trò chuyện trực tiếp:'
-                : 'Select a client or worker to start a direct conversation:'}
-            </p>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {campusContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => {
-                    setShowNewChatModal(false);
-                    handleSelectContact(contact.id);
-                  }}
-                  className="p-3 rounded-2xl bg-[#12233B] hover:bg-[#162B48] border border-[#C5E5EC]/20 hover:border-[#C5E5EC]/40 cursor-pointer transition flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-9 h-9 rounded-full bg-gradient-to-tr ${contact.avatarBg} flex items-center justify-center text-white font-extrabold text-xs shadow border border-[#C5E5EC]/20 overflow-hidden`}
-                    >
-                      {contact.avatarUrl ? (
-                        <img
-                          src={contact.avatarUrl}
-                          alt={contact.name || 'Avatar'}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        (contact.name || 'U').charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <h5 className="font-bold text-xs text-white">{contact.name}</h5>
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
-                            contact.role === 'CLIENT'
-                              ? 'bg-[#3064AE]/30 text-[#C5E5EC] border border-[#C5E5EC]/30'
-                              : 'bg-[#E0FAEB]/20 text-[#E0FAEB] border border-[#E0FAEB]/30'
-                          }`}
-                        >
-                          {contact.roleLabel}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-[#C5E5EC]/70">{contact.school}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#C5E5EC]/60" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cloud Contact Backup & Restore Modal */}
-      {showBackupModal && (
-        <FriendBackupRestoreModal
-          isOpen={showBackupModal}
-          onClose={() => setShowBackupModal(false)}
-        />
-      )}
-
-      {/* Terms of Service & 100% Refund Policy Modal */}
-      {showTermsModal && (
-        <TermsAndRefundPolicyModal
-          isOpen={showTermsModal}
-          onClose={() => setShowTermsModal(false)}
-        />
-      )}
-
-      {recallConfirmMsgId && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setRecallConfirmMsgId(null);
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl bg-[#0E1B2E] border border-slate-700 p-4 shadow-2xl"
-          >
-            <h3 className="text-white font-bold text-base mb-2">
-              {language === 'vi' ? 'Thu hồi tin nhắn?' : 'Recall message?'}
-            </h3>
-
-            <p className="text-sm text-slate-300 mb-4">
-              {language === 'vi'
-                ? 'Tin nhắn sẽ được thu hồi với tất cả mọi người.'
-                : 'This message will be unsent for everyone.'}
-            </p>
-
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setRecallConfirmMsgId(null)}
-                className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 font-medium"
-              >
-                {language === 'vi' ? 'Hủy' : 'Cancel'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const res = recallChatMessage(recallConfirmMsgId);
-                  setRecallConfirmMsgId(null);
-
-                  if (res.success) {
-                    showNotification(
-                      language === 'vi' ? 'Đã Thu Hồi ✓' : 'Message Recalled ✓',
-                      language === 'vi'
-                        ? 'Tin nhắn đã được thu hồi từ cuộc trò chuyện.'
-                        : 'Message was recalled for all participants.',
-                      true
-                    );
-                  } else {
-                    showNotification(
-                      language === 'vi' ? 'Lỗi Thu Hồi' : 'Recall Error',
-                      res.error || 'Unknown error',
-                      false
-                    );
-                  }
-                }}
-                className="px-3 py-2 rounded-xl bg-rose-600 text-white font-bold"
-              >
-                {language === 'vi' ? 'Thu hồi' : 'Recall'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Xác Nhận Thu Hồi Tin Nhắn Trong Hộp Thư (VIEW 3) */}
+      {renderRecallModal()}
     </div>
   );
 };

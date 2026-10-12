@@ -123,7 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/95 dark:bg-[#0B1528]/95 border-b border-slate-200 dark:border-[#C5E5EC]/20 shadow-[0_2px_15px_-3px_rgba(48,100,174,0.12)] dark:shadow-[0_2px_20px_-3px_rgba(48,100,174,0.25)] transition-colors duration-200">
+    <header
+      className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/95 dark:bg-[#0B1528]/95 border-b border-slate-200 dark:border-[#C5E5EC]/20 shadow-[0_2px_15px_-3px_rgba(48,100,174,0.12)] dark:shadow-[0_2px_20px_-3px_rgba(48,100,174,0.25)] transition-colors duration-200"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+    >
       {/* Top Accent Brand Gradient Line (Cobalt 60% -> Crystal 30% -> Ethereal 10%) */}
       <div className="h-0.5 w-full bg-brand-horiz-gradient" />
 

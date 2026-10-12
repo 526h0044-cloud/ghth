@@ -8,6 +8,8 @@ import {
   Moon,
   Sun,
   Volume2,
+  Volume1,
+  VolumeX,
   Globe,
   Scale,
   ShieldAlert,
@@ -25,7 +27,7 @@ import {
 import { useGigMe } from '../context/GigMeContext';
 import { useTranslation } from '../context/LanguageContext';
 import { triggerHaptic } from '../utils/haptics';
-import { playNotificationSound } from '../utils/audio';
+import { playNotificationSound, getTingVolume, setTingVolume } from '../utils/audio';
 import { PhonePrivacyMode } from '../types';
 import { FriendBackupRestoreModal } from '../components/FriendBackupRestoreModal';
 import { DownloadAppDialog } from '../components/DownloadAppDialog';
@@ -56,6 +58,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showPhonePrivacyModal, setShowPhonePrivacyModal] = useState(false);
   const [showDownloadApp, setShowDownloadApp] = useState(false);
+
+  // Âm lượng chuông Ting Ting (Mặc định 50%)
+  const [tingVolume, setTingVolumeState] = useState<number>(() => getTingVolume());
 
   // PIN modal inputs
   const [pinAccountPassword, setPinAccountPassword] = useState('');
@@ -358,59 +363,120 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </h3>
         </div>
 
-        {/* 1. ÂM THANH THÔNG BÁO */}
-        <div className="p-3.5 rounded-2xl bg-[#12233B] border border-[#C5E5EC]/15 space-y-2">
+        {/* 1. ĐIỀU CHỈNH ÂM LƯỢNG TING */}
+        <div className="p-3.5 rounded-2xl bg-[#12233B] border border-[#C5E5EC]/15 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
-              <Volume2 className="w-5 h-5 text-cyan-400" />
+              {tingVolume === 0 ? (
+                <VolumeX className="w-5 h-5 text-rose-400 shrink-0" />
+              ) : tingVolume < 50 ? (
+                <Volume1 className="w-5 h-5 text-cyan-400 shrink-0" />
+              ) : (
+                <Volume2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              )}
               <div>
-                <h4 className="font-bold text-white text-xs">
-                  {language === 'vi' ? 'Âm Thanh Thông Báo Ting Ting' : 'Notification Audio Tone'}
-                </h4>
-                <p className="text-[10px] text-[#C5E5EC]/70">
-                  {language === 'vi' ? 'Chọn giai điệu khi có kèo mới hoặc giải ngân ví' : 'Select sound alert for payouts & new gigs'}
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-bold text-white text-xs">
+                    {language === 'vi' ? 'Điều Chỉnh Âm Lượng Ting' : 'Ting Notification Volume'}
+                  </h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-[#3064AE]/30 text-[#E0FAEB] border border-[#C5E5EC]/30">
+                    {tingVolume === 0
+                      ? (language === 'vi' ? 'Tắt âm' : 'Muted')
+                      : tingVolume === 50
+                      ? `${tingVolume}% (${language === 'vi' ? 'Mặc định' : 'Default'})`
+                      : `${tingVolume}%`}
+                  </span>
+                </div>
+                <p className="text-[10px] text-[#C5E5EC]/70 mt-0.5">
+                  {language === 'vi'
+                    ? 'Kéo thanh trượt để chỉnh âm lượng chuông Ting Ting khi có kèo hoặc tiền về ví'
+                    : 'Adjust volume slider for Ting Ting chime when new gigs arrive or funds land'}
                 </p>
               </div>
             </div>
+
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('medium');
-                playNotificationSound(currentUser.notificationSound || 'BANK_TING');
+                playNotificationSound('BANK_TING', tingVolume);
               }}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#3064AE]/30 hover:bg-[#3064AE]/50 text-[#C5E5EC] font-bold border border-[#C5E5EC]/20 transition cursor-pointer"
+              className="text-[11px] px-3 py-1.5 rounded-xl bg-[#3064AE]/40 hover:bg-[#3064AE]/60 text-[#E0FAEB] font-bold border border-[#C5E5EC]/30 transition shadow-sm cursor-pointer shrink-0"
             >
-              {language === 'vi' ? 'Nghe thử' : 'Test sound'}
+              {language === 'vi' ? '🔔 Nghe thử' : '🔔 Test sound'}
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-            {[
-              { key: 'DING_DEFAULT', labelVi: 'Ding Mặc Định', labelEn: 'Default Ding' },
-              { key: 'BANK_TING', labelVi: 'Ting Ting Tiền Về', labelEn: 'Bank Ting Ting' },
-              { key: 'CASH_COUNT', labelVi: 'Tiếng Đếm Tiền', labelEn: 'Cash Count' },
-              { key: 'SOFT_VIBRATE', labelVi: 'Rung Nhẹ Êm', labelEn: 'Soft Haptic' },
-            ].map((snd) => {
-              const isSelected = (currentUser.notificationSound || 'DING_DEFAULT') === snd.key;
-              return (
-                <button
-                  key={snd.key}
-                  type="button"
-                  onClick={() => {
-                    setNotificationSound(snd.key as any);
-                    playNotificationSound(snd.key as any);
-                    triggerHaptic('light');
-                  }}
-                  className={`p-2 rounded-xl text-center font-bold text-[11px] border transition cursor-pointer ${
-                    isSelected
-                      ? 'bg-gradient-to-r from-[#3064AE] to-[#255294] text-white border-[#E0FAEB]/40 shadow-sm'
-                      : 'bg-[#0E1B2E] hover:bg-[#162B48] text-[#C5E5EC]/80 border-[#C5E5EC]/15'
-                  }`}
-                >
-                  <span>{language === 'vi' ? snd.labelVi : snd.labelEn}</span>
-                </button>
-              );
-            })}
+          {/* Slider thanh kéo điều chỉnh âm lượng */}
+          <div className="pt-1 space-y-2">
+            <div className="relative flex items-center">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={tingVolume}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setTingVolumeState(val);
+                  setTingVolume(val);
+                }}
+                onMouseUp={() => {
+                  playNotificationSound('BANK_TING', tingVolume);
+                }}
+                onTouchEnd={() => {
+                  playNotificationSound('BANK_TING', tingVolume);
+                }}
+                className="w-full h-2 bg-[#0E1B2E] rounded-lg appearance-none cursor-pointer accent-[#3064AE] dark:accent-[#C5E5EC] border border-[#C5E5EC]/20 focus:outline-none"
+              />
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex items-center justify-between text-[10px] text-[#C5E5EC]/70 pt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setTingVolumeState(0);
+                  setTingVolume(0);
+                  triggerHaptic('light');
+                }}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  tingVolume === 0 ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30' : 'bg-[#0E1B2E] hover:text-white border border-white/5'
+                }`}
+              >
+                0% ({language === 'vi' ? 'Tắt' : 'Mute'})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTingVolumeState(50);
+                  setTingVolume(50);
+                  triggerHaptic('light');
+                  playNotificationSound('BANK_TING', 50);
+                }}
+                className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  tingVolume === 50 ? 'bg-[#3064AE]/40 text-[#E0FAEB] font-bold border border-[#C5E5EC]/40 shadow-xs' : 'bg-[#0E1B2E] hover:text-white border border-white/5'
+                }`}
+              >
+                50% ({language === 'vi' ? 'Mặc định' : 'Default'})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTingVolumeState(100);
+                  setTingVolume(100);
+                  triggerHaptic('light');
+                  playNotificationSound('BANK_TING', 100);
+                }}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  tingVolume === 100 ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30' : 'bg-[#0E1B2E] hover:text-white border border-white/5'
+                }`}
+              >
+                100% ({language === 'vi' ? 'Tối đa' : 'Max'})
+              </button>
+            </div>
           </div>
         </div>
 

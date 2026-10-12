@@ -122,14 +122,9 @@ const MainLayout: React.FC = () => {
         return;
       }
 
-      // Check notification type
+      // Check notification type: Không hiện thông báo Toast khi có người đăng việc
       if (notif.type === 'NEW_GIG') {
-        showNotification(
-          notif.title || '🔥 Việc Mới Vừa Đăng!',
-          notif.message || (notif.gigTitle ? `Việc mới: "${notif.gigTitle}" vừa xuất hiện trên campus.` : 'Có công việc mới phù hợp với bạn!'),
-          true,
-          false
-        );
+        return;
       } else if (notif.type === 'STATUS_UPDATE') {
         showNotification(
           notif.title || '⚡ Cập Nhật Trạng Thái Đơn Việc',
@@ -445,7 +440,10 @@ const MainLayout: React.FC = () => {
         </div>
       )}
 
-      <main className={`flex-1 w-full max-w-7xl mx-auto pb-20 transition-all duration-300 ease-in-out ${isLanguageTransitioning ? 'opacity-30 scale-[0.99] filter blur-[0.5px]' : 'opacity-100 scale-100 filter-none'}`}>
+      <main
+        style={{ paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))' }}
+        className={`flex-1 w-full max-w-7xl mx-auto transition-all duration-300 ease-in-out ${isLanguageTransitioning ? 'opacity-30 scale-[0.99] filter blur-[0.5px]' : 'opacity-100 scale-100 filter-none'}`}
+      >
         <ErrorBoundary>
           <Suspense fallback={<ScreenLoadingSpinner label="Đang tải giao diện..." />}>
             {renderContent()}

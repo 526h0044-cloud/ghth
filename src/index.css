@@ -41,6 +41,8 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
     transition: background-color 0.25s ease, color 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100dvh;
   }
 
   html:not(.dark) body {

@@ -2,6 +2,7 @@
 let audioCtx: AudioContext | null = null;
 
 const STORAGE_KEY_AUDIO_MUTED = 'gigme_sound_muted';
+const STORAGE_KEY_TING_VOLUME = 'gigme_ting_volume';
 
 export function isAudioMuted(): boolean {
   try {
@@ -17,6 +18,24 @@ export function setAudioMuted(muted: boolean): void {
   } catch {
     // ignore
   }
+}
+
+export function getTingVolume(): number {
+  try {
+    const val = localStorage.getItem(STORAGE_KEY_TING_VOLUME);
+    if (val !== null) {
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 0 && num <= 100) return num;
+    }
+  } catch {}
+  return 50; // Mặc định 50%
+}
+
+export function setTingVolume(volumePercent: number): void {
+  try {
+    const clamped = Math.max(0, Math.min(100, Math.round(volumePercent)));
+    localStorage.setItem(STORAGE_KEY_TING_VOLUME, clamped.toString());
+  } catch {}
 }
 
 function getAudioContext(): AudioContext {
@@ -45,8 +64,15 @@ export type SoundEffectType =
   | 'CALL_RING'
   | 'CALL_HANGUP';
 
-export function playNotificationSound(type: SoundEffectType = 'DING_DEFAULT') {
+export function playNotificationSound(type: SoundEffectType = 'DING_DEFAULT', volumePercentOverride?: number) {
   if (isAudioMuted()) return;
+
+  const currentVol = typeof volumePercentOverride === 'number'
+    ? Math.max(0, Math.min(100, volumePercentOverride))
+    : getTingVolume();
+
+  if (currentVol <= 0) return;
+  const volMult = currentVol / 100;
 
   try {
     const ctx = getAudioContext();
@@ -251,7 +277,7 @@ export function playNotificationSound(type: SoundEffectType = 'DING_DEFAULT') {
         overtone.frequency.setValueAtTime(3520, now); // A7 harmonic
         overtone.frequency.exponentialRampToValueAtTime(1760, now + 0.3);
 
-        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.setValueAtTime(0.35 * volMult, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
         osc.connect(gain);
@@ -291,7 +317,7 @@ export function playNotificationSound(type: SoundEffectType = 'DING_DEFAULT') {
         osc1.frequency.setValueAtTime(987.77, now); // B5
         osc2.frequency.setValueAtTime(1318.51, now + 0.08); // E6
 
-        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.setValueAtTime(0.25 * volMult, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
         osc1.connect(gain);

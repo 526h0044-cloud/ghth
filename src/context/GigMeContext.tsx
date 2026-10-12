@@ -6839,6 +6839,11 @@ export const GigMeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return { success: false, error: 'Bạn chỉ có thể thu hồi tin nhắn do chính bản thân mình gửi' };
     }
 
+    // Đã thu hồi rồi thì không xử lý lại
+    if (msg.isRecalled) {
+      return { success: false, error: 'Tin nhắn này đã được thu hồi trước đó' };
+    }
+
     // Quy định 24 giờ: 24 * 60 * 60 * 1000 = 86,400,000 ms
     const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
     const elapsed = Date.now() - msg.timestamp;
@@ -6859,43 +6864,61 @@ export const GigMeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       mediaFileName: undefined,
       reactions: {},
       userReactions: {},
-      isPinned: false, // Bỏ ghim khi đã thu hồi
+      isPinned: false, // Bỏ ghim ngay lập tức khi thu hồi
     };
 
     setChats((prev) => prev.map((c) => (c.id === messageId ? updatedMsg : c)));
-    cloudService.saveChatMessage(updatedMsg);
+    cloudService.saveChatMessage(updatedMsg).catch((err) => {
+      console.warn('saveChatMessage recall failed:', err);
+    });
 
     return { success: true };
   };
 
   const togglePinChatMessage = (messageId: string): boolean => {
-    let nextPinned = false;
-    let updatedTarget: ChatMessageEntity | null = null;
-    let sameThreadId: string | null = null;
-    setChats((prev) => {
-      const target = prev.find((m) => m.id === messageId);
-      if (!target) return prev;
-      sameThreadId = target.threadId || target.gigId || null;
-      nextPinned = !target.isPinned;
-      const next = prev.map((m) => {
-        // Bỏ ghim tất cả tin khác trong cùng thread nếu đang pin mới
-        if (sameThreadId && m.threadId === sameThreadId && !m.isRecalled && m.id !== messageId) {
-          return { ...m, isPinned: false };
-        }
-        if (m.id === messageId) {
-          updatedTarget = { ...m, isPinned: nextPinned };
-          return updatedTarget;
-        }
-        return m;
-      });
-      return next;
+    const target = chats.find((m) => m.id === messageId);
+    if (!target) return false;
+
+    // 1. CHẶN TUYỆT ĐỐI VIỆC GHIM TIN NHẮN ĐÃ THU HỒI
+    if (target.isRecalled) {
+      return false;
+    }
+
+    const conversationKey = target.threadId || target.gigId || '';
+    const nextPinned = !target.isPinned;
+    const modifiedMessages: ChatMessageEntity[] = [];
+
+    // 2. Tính toán danh sách tin nhắn mới: Đảm bảo DUY NHẤT 1 TIN NHẮN ĐƯỢC GHIM trong 1 cuộc hội thoại
+    const updatedChats = chats.map((m) => {
+      const mKey = m.threadId || m.gigId || '';
+      const isSameConversation = conversationKey && mKey && conversationKey === mKey;
+
+      // Nếu đang ghim tin này -> Tự động bỏ ghim tất cả các tin khác trong cùng hội thoại
+      if (nextPinned && isSameConversation && m.id !== messageId && m.isPinned) {
+        const unpinnedMsg: ChatMessageEntity = { ...m, isPinned: false };
+        modifiedMessages.push(unpinnedMsg);
+        return unpinnedMsg;
+      }
+
+      if (m.id === messageId) {
+        const updatedTarget: ChatMessageEntity = { ...m, isPinned: nextPinned };
+        modifiedMessages.push(updatedTarget);
+        return updatedTarget;
+      }
+
+      return m;
     });
-  // lưu cloud SAU khi state đã xác định, không chạy trong setChats
-    if (updatedTarget) {
-      cloudService.saveChatMessage(updatedTarget).catch((err) => {
-        console.warn('saveChatMessage pin failed:', err);
+
+    // 3. Cập nhật state thuần túy (không side-effect bên trong setter)
+    setChats(updatedChats);
+
+    // 4. Đồng bộ tất cả các tin nhắn bị thay đổi trạng thái ghim lên Cloud Storage
+    for (const msgToSync of modifiedMessages) {
+      cloudService.saveChatMessage(msgToSync).catch((err) => {
+        console.warn('saveChatMessage pin status failed:', err);
       });
     }
+
     return nextPinned;
   };
 

@@ -18,7 +18,6 @@ import {
   Check,
   Loader2,
   Cloud,
-  CloudCheck,
   RotateCcw,
   FileText,
   Trash2,
@@ -409,7 +408,7 @@ export const CreateGigScreen: React.FC<CreateGigScreenProps> = ({ onBack, onGigC
               className="inline-flex items-center text-[10px] sm:text-xs text-emerald-300 font-medium bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full shadow-sm"
               title={language === 'vi' ? 'Bản nháp được lưu an toàn trên Firestore' : 'Draft auto-saved securely on Firestore'}
             >
-              <CloudCheck className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+              <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" />
               <span className="hidden sm:inline">
                 {language === 'vi' ? `Đã lưu nháp ${lastSavedTime ? `(${lastSavedTime})` : ''}` : `Saved ${lastSavedTime ? `(${lastSavedTime})` : ''}`}
               </span>
